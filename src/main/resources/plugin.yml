@@ -1,0 +1,7 @@
+name: ShulkerBoxOpener
+version: '${projectVersion}'
+main: net.okocraft.shulkerboxopener.Main
+api-version: 1.19
+permissions:
+  shulkerboxopener.use:
+    default: op
