@@ -2,7 +2,6 @@ package net.okocraft.shulkerboxopener;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.bukkit.Material;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -90,7 +89,8 @@ public class Main extends JavaPlugin implements Listener {
         }
 
         ItemStack shulkerBoxItem = event.getView().getBottomInventory().getItem(shulkerSlot);
-        if (shulkerBoxItem == null || shulkerBoxItem.getType() != Material.SHULKER_BOX) {
+        if (shulkerBoxItem == null || !(shulkerBoxItem.getItemMeta() instanceof BlockStateMeta meta)
+                || !(meta.getBlockState() instanceof ShulkerBox)) {
             return;
         }
 
@@ -111,7 +111,8 @@ public class Main extends JavaPlugin implements Listener {
         }
 
         ItemStack shulkerBoxItem = event.getView().getBottomInventory().getItem(shulkerBoxSlots.get(inv));
-        if (shulkerBoxItem == null || shulkerBoxItem.getType() != Material.SHULKER_BOX) {
+        if (shulkerBoxItem == null || !(shulkerBoxItem.getItemMeta() instanceof BlockStateMeta meta)
+                || !(meta.getBlockState() instanceof ShulkerBox)) {
             return;
         }
 
