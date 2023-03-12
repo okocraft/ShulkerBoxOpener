@@ -1,7 +1,7 @@
 package net.okocraft.shulkerboxopener;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -14,6 +14,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +26,7 @@ public class Main extends JavaPlugin implements Listener {
     /**
      * Key: shulker box inventory, value: NOT raw slot of shulker box item.
      */
-    private final Map<Inventory, Integer> shulkerBoxSlots = new HashMap<>();
+    private final Map<Inventory, Integer> shulkerBoxSlots = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -136,6 +137,27 @@ public class Main extends JavaPlugin implements Listener {
         if (event.getItemInHand().equals(shulkerBoxItem)) {
             event.getPlayer().closeInventory();
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    private void onPlayerMove(PlayerMoveEvent event) {
+        if (shulkerBoxSlots.isEmpty()) {
+            return;
+        }
+
+        // Do not move when opening shulkerbox in inventory to prevent folia region merge do bad things.
+
+        boolean opening = false;
+        for (Inventory inv : shulkerBoxSlots.keySet()) {
+            if (inv.getViewers().contains(event.getPlayer())) {
+                opening = true;
+                break;
+            }
+        }
+        // prevent removing entry in loop.
+        if (opening) {
+            event.getPlayer().closeInventory();
         }
     }
 

@@ -2,6 +2,7 @@ name: ShulkerBoxOpener
 version: '${projectVersion}'
 main: net.okocraft.shulkerboxopener.Main
 api-version: 1.19
+folia-supported: true
 permissions:
   shulkerboxopener.use:
     default: op
