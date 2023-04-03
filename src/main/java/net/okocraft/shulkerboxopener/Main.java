@@ -2,6 +2,7 @@ package net.okocraft.shulkerboxopener;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.Bukkit;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -22,6 +23,21 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
+
+    private static final boolean FOLIA;
+
+    static {
+        boolean isFolia;
+
+        try {
+            Bukkit.class.getDeclaredMethod("getAsyncScheduler");
+            isFolia = true;
+        } catch (NoSuchMethodException e) {
+            isFolia = false;
+        }
+
+        FOLIA = isFolia;
+    }
 
     /**
      * Key: shulker box inventory, value: NOT raw slot of shulker box item.
@@ -95,7 +111,7 @@ public class Main extends JavaPlugin implements Listener {
             return;
         }
 
-        setShulkerItemInventory(shulkerBoxItem, inv);
+        setShulkerItemInventory(clicker, shulkerBoxItem, inv);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -117,7 +133,7 @@ public class Main extends JavaPlugin implements Listener {
             return;
         }
 
-        setShulkerItemInventory(shulkerBoxItem, inv);
+        setShulkerItemInventory(clicker, shulkerBoxItem, inv);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
@@ -161,14 +177,20 @@ public class Main extends JavaPlugin implements Listener {
         }
     }
 
-    private void setShulkerItemInventory(ItemStack shulkerBoxItem, Inventory newInventory) {
-        getServer().getScheduler().runTask(this, () -> {
+    private void setShulkerItemInventory(HumanEntity inventoryHolder, ItemStack shulkerBoxItem, Inventory newInventory) {
+        Runnable task = () -> {
             if (shulkerBoxItem.getItemMeta() instanceof BlockStateMeta meta
                     && meta.getBlockState() instanceof ShulkerBox shulkerBox) {
                 shulkerBox.getInventory().setContents(newInventory.getContents());
                 meta.setBlockState(shulkerBox);
                 shulkerBoxItem.setItemMeta(meta);
             }
-        });
+        };
+
+        if (FOLIA) {
+            inventoryHolder.getScheduler().run(this, t -> task.run(), null);
+        } else {
+            getServer().getScheduler().runTask(this, task);
+        }
     }
 }
