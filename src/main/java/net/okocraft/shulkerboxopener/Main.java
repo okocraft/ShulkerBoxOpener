@@ -1,9 +1,14 @@
 package net.okocraft.shulkerboxopener;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Chest;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,6 +22,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
@@ -44,6 +50,10 @@ public class Main extends JavaPlugin implements Listener {
      */
     private final Map<Inventory, Integer> shulkerBoxSlots = new ConcurrentHashMap<>();
 
+    private final Map<UUID, InventoryView> previousInventoryViews = new ConcurrentHashMap<>();
+
+    private final Set<UUID> apiChestOpening = ConcurrentHashMap.newKeySet();
+
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
@@ -51,30 +61,82 @@ public class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     private void onInventoryClose(InventoryCloseEvent event) {
-        shulkerBoxSlots.remove(event.getView().getTopInventory());
-        ((Player) event.getPlayer()).updateInventory();
+        Inventory inv = event.getView().getTopInventory();
+        Player player = (Player) event.getPlayer();
+
+        // play chest close animation.
+        if (apiChestOpening.remove(player.getUniqueId())) {
+            InventoryHolder holder = inv.getHolder();
+            if (holder instanceof Chest chest) {
+                chest.close();
+            } else if (holder instanceof DoubleChest doubleChest) {
+                if (doubleChest.getRightSide() instanceof Chest chest) {
+                    chest.close();
+                }
+                if (doubleChest.getLeftSide() instanceof Chest chest) {
+                    chest.close();
+                }
+            }
+        }
+
+        // not opening shulker box
+        if (shulkerBoxSlots.remove(inv) == null) {
+            return;
+        }
+
+        player.updateInventory();
+
+        // if player opened inventory which can be re-opened.
+        InventoryView previousInventoryView = previousInventoryViews.remove(player.getUniqueId());
+        if (previousInventoryView != null) {
+            schedule(player, () -> {
+                // play open chest animation when player open previous cached chest.
+                InventoryHolder holder = previousInventoryView.getTopInventory().getHolder();
+                if (holder instanceof Chest chest) {
+                    chest.open();
+                    apiChestOpening.add(player.getUniqueId());
+                } else if (holder instanceof DoubleChest doubleChest) {
+                    if (doubleChest.getRightSide() instanceof Chest chest) {
+                        chest.open();
+                    }
+                    if (doubleChest.getLeftSide() instanceof Chest chest) {
+                        chest.open();
+                    }
+                    apiChestOpening.add(player.getUniqueId());
+                }
+
+                player.openInventory(previousInventoryView);
+            });
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     private void onInventoryClick(InventoryClickEvent event) {
         if (event.getView().getType() == InventoryType.CRAFTING) {
             handleShulkerBoxOpen(event);
-        } if (event.getView().getType() == InventoryType.SHULKER_BOX) {
+        } else if (event.getView().getType() == InventoryType.SHULKER_BOX) {
             handleShulkerBoxClick(event);
+        } else {
+            if (handleShulkerBoxOpen(event)) {
+                previousInventoryViews.put(event.getWhoClicked().getUniqueId(), event.getView());
+            }
         }
     }
 
-    private void handleShulkerBoxOpen(InventoryClickEvent event) {
+    private boolean handleShulkerBoxOpen(InventoryClickEvent event) {
+        if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
+            return false;
+        }
         if (event.getAction() != InventoryAction.PICKUP_HALF) {
-            return;
+            return false;
         }
         if (!event.getWhoClicked().hasPermission("shulkerboxopener.use")) {
-            return;
+            return false;
         }
 
         ItemStack shulkerBoxItem = event.getCurrentItem();
         if (shulkerBoxItem == null || shulkerBoxItem.getAmount() != 1) {
-            return;
+            return false;
         }
 
         if (shulkerBoxItem.getItemMeta() instanceof BlockStateMeta im
@@ -84,7 +146,10 @@ public class Main extends JavaPlugin implements Listener {
             Inventory inv = shulkerBoxState.getInventory();
             shulkerBoxSlots.put(inv, event.getSlot());
             event.getWhoClicked().openInventory(inv);
+            return true;
         }
+
+        return false;
     }
 
     private void handleShulkerBoxClick(InventoryClickEvent event) {
@@ -178,17 +243,19 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void setShulkerItemInventory(HumanEntity inventoryHolder, ItemStack shulkerBoxItem, Inventory newInventory) {
-        Runnable task = () -> {
+        schedule(inventoryHolder, () -> {
             if (shulkerBoxItem.getItemMeta() instanceof BlockStateMeta meta
                     && meta.getBlockState() instanceof ShulkerBox shulkerBox) {
                 shulkerBox.getInventory().setContents(newInventory.getContents());
                 meta.setBlockState(shulkerBox);
                 shulkerBoxItem.setItemMeta(meta);
             }
-        };
+        });
+    }
 
+    private void schedule(Entity entity, Runnable task) {
         if (FOLIA) {
-            inventoryHolder.getScheduler().run(this, t -> task.run(), null);
+            //entity.getScheduler().run(this, t -> task.run(), null);
         } else {
             getServer().getScheduler().runTask(this, task);
         }
