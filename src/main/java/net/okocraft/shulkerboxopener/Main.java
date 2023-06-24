@@ -4,11 +4,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bukkit.Bukkit;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -29,21 +27,6 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
-
-    private static final boolean FOLIA;
-
-    static {
-        boolean isFolia;
-
-        try {
-            Bukkit.class.getDeclaredMethod("getAsyncScheduler");
-            isFolia = true;
-        } catch (NoSuchMethodException e) {
-            isFolia = false;
-        }
-
-        FOLIA = isFolia;
-    }
 
     /**
      * Key: shulker box inventory, value: NOT raw slot of shulker box item.
@@ -89,7 +72,7 @@ public class Main extends JavaPlugin implements Listener {
         // if player opened inventory which can be re-opened.
         InventoryView previousInventoryView = previousInventoryViews.remove(player.getUniqueId());
         if (previousInventoryView != null) {
-            schedule(player, () -> {
+            player.getScheduler().run(this, t -> {
                 // play open chest animation when player open previous cached chest.
                 InventoryHolder holder = previousInventoryView.getTopInventory().getHolder();
                 if (holder instanceof Chest chest) {
@@ -106,7 +89,7 @@ public class Main extends JavaPlugin implements Listener {
                 }
 
                 player.openInventory(previousInventoryView);
-            });
+            }, null);
         }
     }
 
@@ -243,21 +226,13 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void setShulkerItemInventory(HumanEntity inventoryHolder, ItemStack shulkerBoxItem, Inventory newInventory) {
-        schedule(inventoryHolder, () -> {
+        inventoryHolder.getScheduler().run(this, t -> {
             if (shulkerBoxItem.getItemMeta() instanceof BlockStateMeta meta
                     && meta.getBlockState() instanceof ShulkerBox shulkerBox) {
                 shulkerBox.getInventory().setContents(newInventory.getContents());
                 meta.setBlockState(shulkerBox);
                 shulkerBoxItem.setItemMeta(meta);
             }
-        });
-    }
-
-    private void schedule(Entity entity, Runnable task) {
-        if (FOLIA) {
-            //entity.getScheduler().run(this, t -> task.run(), null);
-        } else {
-            getServer().getScheduler().runTask(this, task);
-        }
+        }, null);
     }
 }
