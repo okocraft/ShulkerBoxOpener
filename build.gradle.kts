@@ -1,5 +1,6 @@
 plugins {
     java
+    id("io.papermc.paperweight.userdev") version "1.5.5"
 }
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
@@ -13,22 +14,39 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
+    paperweight.foliaDevBundle("1.20.1-R0.1-SNAPSHOT")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.compileJava {
-    options.release.set(17)
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.processResources {
-    filesMatching(listOf("plugin.yml")) {
-        expand("projectVersion" to version)
+tasks {
+    reobfJar {
+        outputJar.set(
+                project.layout.buildDirectory
+                        .file("libs/ShulkerBoxOpener-${project.version}.jar")
+        )
     }
-}
 
-tasks.test {
-    useJUnitPlatform()
+    build {
+        dependsOn(reobfJar)
+    }
+
+    compileJava {
+        options.encoding = Charsets.UTF_8.name()
+        options.release.set(17)
+    }
+
+    processResources {
+        filteringCharset = Charsets.UTF_8.name()
+
+        filesMatching(listOf("plugin.yml")) {
+            expand("projectVersion" to project.version)
+        }
+    }
 }
