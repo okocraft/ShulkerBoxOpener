@@ -4,9 +4,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import org.bukkit.Location;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.craftbukkit.v1_20_R1.block.CraftShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -126,13 +131,31 @@ public class Main extends JavaPlugin implements Listener {
                 && im.getBlockState() instanceof ShulkerBox shulkerBoxState) {
             event.setCancelled(true);
             event.getView().setCursor(null);
-            Inventory inv = shulkerBoxState.getInventory();
+            ShulkerBox updated = createLocationUpdatedShulkerBoxMeta(shulkerBoxState, event.getWhoClicked().getLocation());
+            im.setBlockState(updated);
+            shulkerBoxItem.setItemMeta(im);
+            Inventory inv = updated.getInventory();
             shulkerBoxSlots.put(inv, event.getSlot());
             event.getWhoClicked().openInventory(inv);
             return true;
         }
 
         return false;
+    }
+
+    private ShulkerBox createLocationUpdatedShulkerBoxMeta(ShulkerBox original, Location loc) {
+        if (!(original instanceof CraftShulkerBox shulkerBox)) {
+            return null;
+        }
+
+        ShulkerBoxBlockEntity handle = shulkerBox.getTileEntity();
+        ShulkerBoxBlockEntity modified = new ShulkerBoxBlockEntity(handle.getColor(), new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), handle.getBlockState());
+
+        for (int i = 0; i < ShulkerBoxBlockEntity.CONTAINER_SIZE; i++) {
+            modified.setItem(i, handle.getContents().get(i));
+        }
+
+        return new CraftShulkerBox(loc.getWorld(), modified);
     }
 
     private void handleShulkerBoxClick(InventoryClickEvent event) {
@@ -148,7 +171,7 @@ public class Main extends JavaPlugin implements Listener {
         }
 
         int shulkerSlot = shulkerBoxSlots.get(inv);
-        if(event.getRawSlot() >= inv.getSize() && event.getSlot() == shulkerSlot) {
+        if (event.getRawSlot() >= inv.getSize() && event.getSlot() == shulkerSlot) {
             event.setCancelled(true);
             return;
         }
