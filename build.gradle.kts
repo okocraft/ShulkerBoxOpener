@@ -1,6 +1,6 @@
 plugins {
     java
-    id("io.papermc.paperweight.userdev") version "1.5.5"
+    id("io.papermc.paperweight.userdev") version "1.5.6"
 }
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
@@ -14,10 +14,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.foliaDevBundle("1.20.1-R0.1-SNAPSHOT")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
 }
 
 java {

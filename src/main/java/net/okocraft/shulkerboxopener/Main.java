@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.craftbukkit.v1_20_R1.block.CraftShulkerBox;
+import org.bukkit.craftbukkit.v1_20_R2.block.CraftShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
