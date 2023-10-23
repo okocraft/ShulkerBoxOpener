@@ -12,6 +12,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.craftbukkit.v1_20_R2.block.CraftShulkerBox;
+import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftResultInventory;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
@@ -106,6 +108,11 @@ public class Main extends JavaPlugin implements Listener {
             handleShulkerBoxClick(event);
         } else {
             if (handleShulkerBoxOpen(event)) {
+                if (event.getView().getTopInventory() instanceof CraftResultInventory result) {
+                    result.getResultInventory().clearContent();
+                } else if (event.getView().getTopInventory() instanceof CraftingInventory ci) {
+                    ci.setResult(null);
+                }
                 previousInventoryViews.put(event.getWhoClicked().getUniqueId(), event.getView());
             }
         }
