@@ -1,9 +1,9 @@
 plugins {
     java
-    id("io.papermc.paperweight.userdev") version "1.5.11"
+    id("io.papermc.paperweight.userdev") version "1.6.0"
 }
 
-java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 group = "net.okocraft"
 version = "1.0.0"
@@ -14,29 +14,20 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.20.5-R0.1-SNAPSHOT")
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
+paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
+
 tasks {
-    reobfJar {
-        outputJar.set(
-                project.layout.buildDirectory
-                        .file("libs/ShulkerBoxOpener-${project.version}.jar")
-        )
-    }
-
-    build {
-        dependsOn(reobfJar)
-    }
-
     compileJava {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(21)
     }
 
     processResources {
@@ -45,5 +36,9 @@ tasks {
         filesMatching(listOf("plugin.yml")) {
             expand("projectVersion" to project.version)
         }
+    }
+
+    jar {
+        archiveFileName = "ShulkerBoxOpener-${project.version}.jar"
     }
 }
