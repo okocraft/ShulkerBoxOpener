@@ -7,6 +7,7 @@ java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 group = "net.okocraft"
 version = "1.0.0"
+val mcVersion = "1.20.5"
 
 repositories {
     mavenCentral()
@@ -14,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.5-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("$mcVersion-R0.1-SNAPSHOT")
 }
 
 java {
@@ -34,11 +35,11 @@ tasks {
         filteringCharset = Charsets.UTF_8.name()
 
         filesMatching(listOf("plugin.yml")) {
-            expand("projectVersion" to project.version)
+            expand("projectVersion" to project.version, "mcVersion" to mcVersion)
         }
     }
 
     jar {
-        archiveFileName = "ShulkerBoxOpener-${project.version}.jar"
+        archiveFileName = "ShulkerBoxOpener-${project.version}-mc$mcVersion.jar"
     }
 }
