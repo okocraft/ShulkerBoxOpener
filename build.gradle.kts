@@ -1,13 +1,13 @@
 plugins {
     java
-    id("io.papermc.paperweight.userdev") version "1.6.2"
+    id("io.papermc.paperweight.userdev") version "1.7.1"
 }
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 group = "net.okocraft"
 version = "1.0.0"
-val mcVersion = "1.20.5"
+val mcVersion = "1.20.6"
 
 repositories {
     mavenCentral()
