@@ -7,7 +7,7 @@ java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 group = "net.okocraft"
 version = "1.0.0"
-val mcVersion = "1.20.6"
+val mcVersion = "1.21"
 
 repositories {
     mavenCentral()
